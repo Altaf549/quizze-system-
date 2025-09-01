@@ -8,10 +8,24 @@ use Illuminate\Support\Facades\Validator;
 
 class CategoryController extends Controller
 {
-    public function index()
+    public function create()
     {
-        $categories = Category::all();
-        return view('admin.categories.index', compact('categories'));
+        return view('admin.categories.create');
+    }
+
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            $categories = Category::query();
+            return datatables()
+                ->eloquent($categories)
+                ->addColumn('actions', function($category) {
+                    return '';  // The actions column is rendered client-side in the DataTable
+                })
+                ->toJson();
+        }
+
+        return view('admin.categories.index');
     }
 
     public function store(Request $request)
