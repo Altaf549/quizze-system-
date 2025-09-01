@@ -16,8 +16,3 @@ class Category extends Model
         return $this->hasMany(Quiz::class);
     }
 }
-
-class Category extends Model
-{
-    //
-}

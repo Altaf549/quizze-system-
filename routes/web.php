@@ -21,7 +21,7 @@ Route::middleware('guest')->group(function() {
 Route::post('/logout', [AdminController::class, 'logout'])->name('logout')->middleware('auth');
 
 // Admin Routes
-Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
+Route::prefix('admin')->middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::resource('categories', CategoryController::class);
     Route::resource('quizzes', QuizController::class);
