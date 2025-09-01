@@ -48,9 +48,6 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Recent Quizzes</h5>
-                <a href="{{ route('quizzes.create') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Add Quiz
-                </a>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -83,9 +80,6 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Recent Categories</h5>
-                <a href="{{ route('categories.create') }}" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Add Category
-                </a>
             </div>
             <div class="card-body">
                 <div class="table-responsive">

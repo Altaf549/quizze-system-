@@ -138,11 +138,10 @@ $(document).ready(function() {
             {data: 'category.name', name: 'category.name'},
             {data: 'time_limit', name: 'time_limit'},
             {
-                data: 'is_active',
-                name: 'is_active',
-                render: function(data) {
-                    return data ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>';
-                }
+                data: 'status',
+                name: 'status',
+                orderable: false,
+                searchable: false
             },
             {
                 data: 'actions',

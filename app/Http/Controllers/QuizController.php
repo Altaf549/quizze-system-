@@ -9,11 +9,33 @@ use Illuminate\Support\Facades\Validator;
 
 class QuizController extends Controller
 {
-    public function index()
+    public function create()
     {
-        $quizzes = Quiz::with('category')->get();
         $categories = Category::all();
-        return view('admin.quizzes.index', compact('quizzes', 'categories'));
+        return view('admin.quizzes.create', compact('categories'));
+    }
+
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            $quizzes = Quiz::with('category');
+            return datatables()
+                ->eloquent($quizzes)
+                ->addColumn('status', function($quiz) {
+                    return $quiz->is_active ? 'Active' : 'Inactive';
+                })
+                ->addColumn('actions', function($quiz) {
+                    return '
+                        <button class="btn btn-sm btn-primary edit-quiz" data-id="'.$quiz->id.'">Edit</button>
+                        <button class="btn btn-sm btn-danger delete-quiz" data-id="'.$quiz->id.'">Delete</button>
+                    ';
+                })
+                ->rawColumns(['actions'])
+                ->toJson();
+        }
+
+        $categories = Category::all();
+        return view('admin.quizzes.index', compact('categories'));
     }
 
     public function store(Request $request)

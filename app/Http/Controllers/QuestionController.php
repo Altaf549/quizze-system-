@@ -8,6 +8,35 @@ use Illuminate\Support\Facades\Validator;
 
 class QuestionController extends Controller
 {
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            $questions = Question::with('quiz');
+            return datatables()
+                ->eloquent($questions)
+                ->addColumn('actions', function($question) {
+                    return '
+                        <button class="btn btn-sm btn-primary edit-question" data-id="'.$question->id.'">Edit</button>
+                        <button class="btn btn-sm btn-danger delete-question" data-id="'.$question->id.'">Delete</button>
+                    ';
+                })
+                ->editColumn('options', function($question) {
+                    $options = collect($question->options)->map(function($option, $key) {
+                        $isCorrect = $key === $question->correct_answer ? ' (✓)' : '';
+                        return $key . ': ' . $option . $isCorrect;
+                    })->join('<br>');
+                    return '<div class="question-options">' . $options . '</div>';
+                })
+                ->editColumn('quiz.title', function($question) {
+                    return $question->quiz->title ?? 'N/A';
+                })
+                ->rawColumns(['actions', 'options'])
+                ->toJson();
+        }
+
+        $quizzes = \App\Models\Quiz::all();
+        return view('admin.questions.index', compact('quizzes'));
+    }
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [

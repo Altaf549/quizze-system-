@@ -82,12 +82,18 @@
 </div>
 
 @push('scripts')
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <script>
+$.ajaxSetup({
+    headers: {
+        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+    }
+});
 $(document).ready(function() {
     var table = $('#categoriesTable').DataTable({
         processing: true,
         serverSide: true,
-        ajax: "{{ route('categories.index') }}",
+        ajax: "/admin/categories",
         columns: [
             {data: 'id', name: 'id'},
             {data: 'name', name: 'name'},
@@ -118,6 +124,9 @@ $(document).ready(function() {
             url: "{{ route('categories.store') }}",
             method: 'POST',
             data: $(this).serialize(),
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             success: function(response) {
                 $('#addCategoryModal').modal('hide');
                 table.ajax.reload();
@@ -149,9 +158,12 @@ $(document).ready(function() {
         e.preventDefault();
         let id = $('#edit_category_id').val();
         $.ajax({
-            url: `/categories/${id}`,
-            method: 'PUT',
-            data: $(this).serialize(),
+            url: `/admin/categories/${id}`,
+            method: 'POST',
+            data: $(this).serialize() + '&_method=PUT',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             success: function(response) {
                 $('#editCategoryModal').modal('hide');
                 table.ajax.reload();
@@ -174,8 +186,12 @@ $(document).ready(function() {
         if(confirm('Are you sure you want to delete this category?')) {
             let id = $(this).data('id');
             $.ajax({
-                url: `/categories/${id}`,
-                method: 'DELETE',
+                url: `/admin/categories/${id}`,
+                method: 'POST',
+                data: {
+                    _method: 'DELETE',
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
                 success: function(response) {
                     table.ajax.reload();
                     alert(response.message);
