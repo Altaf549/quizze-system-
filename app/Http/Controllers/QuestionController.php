@@ -11,24 +11,40 @@ class QuestionController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $questions = Question::with('quiz');
+            $query = Question::with('quiz');
+            
             return datatables()
-                ->eloquent($questions)
+                ->eloquent($query)
                 ->addColumn('actions', function($question) {
                     return '
-                        <button class="btn btn-sm btn-primary edit-question" data-id="'.$question->id.'">Edit</button>
-                        <button class="btn btn-sm btn-danger delete-question" data-id="'.$question->id.'">Delete</button>
-                    ';
+                        <button class="btn btn-action btn-edit edit-question" 
+                                data-id="'.$question->id.'"
+                                data-question-text="'.htmlspecialchars($question->question_text, ENT_QUOTES).'"
+                                data-options="'.htmlspecialchars(json_encode($question->options), ENT_QUOTES).'"
+                                data-correct-answer="'.$question->correct_answer.'"
+                                data-bs-toggle="tooltip"
+                                title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-action btn-delete delete-question" 
+                                data-id="'.$question->id.'"
+                                data-bs-toggle="tooltip"
+                                title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>';
                 })
                 ->editColumn('options', function($question) {
-                    $options = collect($question->options)->map(function($option, $key) {
+                    if (!is_array($question->options)) {
+                        return 'Invalid options format';
+                    }
+                    $options = collect($question->options)->map(function($option, $key) use ($question) {
                         $isCorrect = $key === $question->correct_answer ? ' (✓)' : '';
                         return $key . ': ' . $option . $isCorrect;
                     })->join('<br>');
                     return '<div class="question-options">' . $options . '</div>';
                 })
                 ->editColumn('quiz.title', function($question) {
-                    return $question->quiz->title ?? 'N/A';
+                    return $question->quiz ? $question->quiz->title : 'N/A';
                 })
                 ->rawColumns(['actions', 'options'])
                 ->toJson();

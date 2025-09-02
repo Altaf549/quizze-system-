@@ -138,12 +138,6 @@ $(document).ready(function() {
                 searchable: false,
                 render: function(data, type, row) {
                     return `
-                        <a href="/admin/quizzes/${row.id}" 
-                           class="btn btn-action btn-view" 
-                           data-bs-toggle="tooltip" 
-                           title="View">
-                            <i class="fas fa-eye"></i>
-                        </a>
                         <button class="btn btn-action btn-edit edit-quiz" 
                                 data-id="${row.id}" 
                                 data-title="${row.title}"

@@ -162,14 +162,23 @@ $(document).ready(function() {
     var table = $('#questionsTable').DataTable({
         processing: true,
         serverSide: true,
-        ajax: "{{ route('questions.index') }}",
+        ajax: {
+            url: "{{ route('questions.index') }}",
+            type: 'GET',
+            data: function (d) {
+                // Add any additional parameters you need to send with the request
+            },
+            error: function(xhr, error, thrown) {
+                console.error('DataTables error:', error, thrown);
+            }
+        },
         columns: [
             {data: 'id', name: 'id'},
             {data: 'quiz.title', name: 'quiz.title'},
             {data: 'question_text', name: 'question_text'},
-            {data: 'options', name: 'options'},
+            {data: 'options', name: 'options', orderable: false, searchable: false},
             {
-                data: 'actions',
+                data: 'id',
                 name: 'actions',
                 orderable: false,
                 searchable: false,
@@ -177,9 +186,9 @@ $(document).ready(function() {
                     return `
                         <button class="btn btn-action btn-edit edit-question" 
                                 data-id="${row.id}" 
-                                data-question-text="${row.question_text}"
-                                data-options='${JSON.stringify(row.options)}'
-                                data-correct-answer="${row.correct_answer}"
+                                data-question-text="${row.question_text || ''}"
+                                data-options='${JSON.stringify(row.options || {})}'
+                                data-correct-answer="${row.correct_answer || ''}"
                                 data-bs-toggle="tooltip"
                                 title="Edit">
                             <i class="fas fa-edit"></i>
@@ -193,28 +202,66 @@ $(document).ready(function() {
                     `;
                 }
             }
-        ]
+        ],
+        order: [[0, 'desc']],
+        responsive: true,
+        language: {
+            processing: '<i class="fa fa-spinner fa-spin fa-3x fa-fw"></i><span class="sr-only">Loading...</span> '
+        },
+        drawCallback: function(settings) {
+            // Re-initialize tooltips after table draw
+            $('[data-bs-toggle="tooltip"]').tooltip();
+        }
     });
 
     // Add Question
     $('#addQuestionForm').on('submit', function(e) {
         e.preventDefault();
+        
+        // Clear previous error states
+        $('.is-invalid').removeClass('is-invalid');
+        $('.invalid-feedback').text('');
+        
+        // Get form data
+        let formData = {
+            _token: '{{ csrf_token() }}',
+            quiz_id: $('#quiz_id').val(),
+            question_text: $('#question_text').val(),
+            options: [
+                $('input[name="options[]"]').eq(0).val(),
+                $('input[name="options[]"]').eq(1).val(),
+                $('input[name="options[]"]').eq(2).val(),
+                $('input[name="options[]"]').eq(3).val()
+            ],
+            correct_answer: $('#correct_answer').val()
+        };
+        
         $.ajax({
             url: "{{ route('questions.store') }}",
             method: 'POST',
-            data: $(this).serialize(),
+            data: formData,
+            dataType: 'json',
             success: function(response) {
                 $('#addQuestionModal').modal('hide');
+                $('#addQuestionForm')[0].reset();
                 table.ajax.reload();
-                alert(response.message);
+                alert('Question added successfully!');
             },
             error: function(xhr) {
                 if(xhr.status === 422) {
                     let errors = xhr.responseJSON.errors;
                     Object.keys(errors).forEach(function(key) {
-                        $(`#${key}`).addClass('is-invalid');
-                        $(`#${key}`).siblings('.invalid-feedback').text(errors[key][0]);
+                        if (key.includes('options.')) {
+                            let index = key.split('.')[1];
+                            $(`input[name="options[]"]`).eq(index).addClass('is-invalid')
+                                .siblings('.invalid-feedback').text(errors[key][0]);
+                        } else {
+                            $(`#${key}`).addClass('is-invalid')
+                                .siblings('.invalid-feedback').text(errors[key][0]);
+                        }
                     });
+                } else {
+                    alert('An error occurred. Please try again.');
                 }
             }
         });
@@ -223,59 +270,123 @@ $(document).ready(function() {
     // Edit Question
     $(document).on('click', '.edit-question', function() {
         let id = $(this).data('id');
-        // Fetch question data
-        $.get(`/admin/questions/${id}`, function(question) {
-            $('#edit_question_id').val(id);
-            $('#edit_question_text').val(question.question_text);
-            $('#edit_option_a').val(question.options.A);
-            $('#edit_option_b').val(question.options.B);
-            $('#edit_option_c').val(question.options.C);
-            $('#edit_option_d').val(question.options.D);
-            $('#edit_correct_answer').val(question.correct_answer);
-            $('#editQuestionModal').modal('show');
-        });
+        let questionText = $(this).data('question-text');
+        let options = $(this).data('options');
+        let correctAnswer = $(this).data('correct-answer');
+        
+        // Populate the edit form
+        $('#edit_question_id').val(id);
+        $('#edit_question_text').val(questionText);
+        $('#edit_option_a').val(options.A || '');
+        $('#edit_option_b').val(options.B || '');
+        $('#edit_option_c').val(options.C || '');
+        $('#edit_option_d').val(options.D || '');
+        $('#edit_correct_answer').val(correctAnswer);
+        
+        // Clear any previous validation errors
+        $('.is-invalid').removeClass('is-invalid');
+        $('.invalid-feedback').text('');
+        
+        // Show the modal
+        $('#editQuestionModal').modal('show');
     });
 
     // Update Question
     $('#editQuestionForm').on('submit', function(e) {
         e.preventDefault();
+        
+        let formData = {
+            _token: $('meta[name="csrf-token"]').attr('content'),
+            _method: 'PUT',
+            question_text: $('#edit_question_text').val(),
+            options: [
+                $('#edit_option_a').val(),
+                $('#edit_option_b').val(),
+                $('#edit_option_c').val(),
+                $('#edit_option_d').val()
+            ],
+            correct_answer: $('#edit_correct_answer').val()
+        };
+        
         let id = $('#edit_question_id').val();
+        
         $.ajax({
             url: `/admin/questions/${id}`,
-            method: 'PUT',
-            data: $(this).serialize(),
+            method: 'POST', // Laravel's way of handling PUT requests with _method
+            data: formData,
             success: function(response) {
                 $('#editQuestionModal').modal('hide');
                 table.ajax.reload();
-                alert(response.message);
+                showToast('success', response.message);
             },
             error: function(xhr) {
                 if(xhr.status === 422) {
                     let errors = xhr.responseJSON.errors;
+                    // Clear previous errors
+                    $('.is-invalid').removeClass('is-invalid');
+                    $('.invalid-feedback').text('');
+                    
+                    // Show new errors
                     Object.keys(errors).forEach(function(key) {
-                        $(`#edit_${key}`).addClass('is-invalid');
-                        $(`#edit_${key}`).siblings('.invalid-feedback').text(errors[key][0]);
+                        let field = key.replace('options.', 'option_').toLowerCase();
+                        $(`#edit_${field}`).addClass('is-invalid');
+                        $(`#edit_${field}`).siblings('.invalid-feedback').text(errors[key][0]);
                     });
+                } else {
+                    showToast('error', 'An error occurred. Please try again.');
                 }
             }
         });
     });
 
     // Delete Question
-    $(document).on('click', '.delete-question', function() {
+    $(document).on('click', '.delete-question', function(e) {
+        e.preventDefault();
+        
         if(confirm('Are you sure you want to delete this question?')) {
             let id = $(this).data('id');
+            let button = $(this);
+            
             $.ajax({
                 url: `/admin/questions/${id}`,
-                method: 'DELETE',
+                method: 'POST',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    _method: 'DELETE'
+                },
                 success: function(response) {
                     table.ajax.reload();
-                    alert(response.message);
+                    showToast('success', response.message);
+                },
+                error: function(xhr) {
+                    showToast('error', 'An error occurred while deleting the question.');
                 }
             });
         }
     });
-});
+    });
+    
+    // Helper function to show toast notifications
+    function showToast(type, message) {
+        const toast = `
+            <div class="toast align-items-center text-white bg-${type} border-0 position-fixed bottom-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        
+        // Add toast to body and show it
+        $(toast).appendTo('body').toast({ autohide: true, delay: 3000 }).toast('show');
+        
+        // Remove toast after it's hidden
+        setTimeout(() => {
+            $('.toast').toast('dispose').remove();
+        }, 3500);
+    }
 </script>
 @endpush
 @endsection
