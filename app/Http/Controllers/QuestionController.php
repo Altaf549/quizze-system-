@@ -15,38 +15,49 @@ class QuestionController extends Controller
             
             return datatables()
                 ->eloquent($query)
+                ->addColumn('options_display', function($question) {
+                    if (!is_array($question->options)) {
+                        try {
+                            $options = json_decode($question->options, true);
+                            if (json_last_error() !== JSON_ERROR_NONE) {
+                                return 'Invalid options format';
+                            }
+                            $question->options = $options;
+                        } catch (\Exception $e) {
+                            return 'Error parsing options';
+                        }
+                    }
+                    
+                    $options = collect($question->options)->map(function($option, $key) use ($question) {
+                        $isCorrect = $key === $question->correct_answer ? ' (✓)' : '';
+                        return htmlspecialchars($key . ': ' . $option . $isCorrect, ENT_QUOTES);
+                    })->join('<br>');
+                    
+                    return '<div class="question-options">' . $options . '</div>';
+                })
                 ->addColumn('actions', function($question) {
+                    $options = is_string($question->options) ? $question->options : json_encode($question->options);
                     return '
                         <button class="btn btn-action btn-edit edit-question" 
                                 data-id="'.$question->id.'"
                                 data-question-text="'.htmlspecialchars($question->question_text, ENT_QUOTES).'"
-                                data-options="'.htmlspecialchars(json_encode($question->options), ENT_QUOTES).'"
-                                data-correct-answer="'.$question->correct_answer.'"
+                                data-options="'.htmlspecialchars($options, ENT_QUOTES).'"
+                                data-correct-answer="'.htmlspecialchars($question->correct_answer, ENT_QUOTES).'"
                                 data-bs-toggle="tooltip"
                                 title="Edit">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-action btn-delete delete-question" 
+                        <button class="btn btn-action btn-delete delete-question ms-1" 
                                 data-id="'.$question->id.'"
                                 data-bs-toggle="tooltip"
                                 title="Delete">
                             <i class="fas fa-trash"></i>
                         </button>';
                 })
-                ->editColumn('options', function($question) {
-                    if (!is_array($question->options)) {
-                        return 'Invalid options format';
-                    }
-                    $options = collect($question->options)->map(function($option, $key) use ($question) {
-                        $isCorrect = $key === $question->correct_answer ? ' (✓)' : '';
-                        return $key . ': ' . $option . $isCorrect;
-                    })->join('<br>');
-                    return '<div class="question-options">' . $options . '</div>';
-                })
                 ->editColumn('quiz.title', function($question) {
-                    return $question->quiz ? $question->quiz->title : 'N/A';
+                    return $question->quiz ? htmlspecialchars($question->quiz->title, ENT_QUOTES) : 'N/A';
                 })
-                ->rawColumns(['actions', 'options'])
+                ->rawColumns(['actions', 'options_display'])
                 ->toJson();
         }
 

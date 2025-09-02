@@ -176,31 +176,17 @@ $(document).ready(function() {
             {data: 'id', name: 'id'},
             {data: 'quiz.title', name: 'quiz.title'},
             {data: 'question_text', name: 'question_text'},
-            {data: 'options', name: 'options', orderable: false, searchable: false},
             {
-                data: 'id',
+                data: 'options_display', 
+                name: 'options_display', 
+                orderable: false, 
+                searchable: false
+            },
+            {
+                data: 'actions',
                 name: 'actions',
                 orderable: false,
-                searchable: false,
-                render: function(data, type, row) {
-                    return `
-                        <button class="btn btn-action btn-edit edit-question" 
-                                data-id="${row.id}" 
-                                data-question-text="${row.question_text || ''}"
-                                data-options='${JSON.stringify(row.options || {})}'
-                                data-correct-answer="${row.correct_answer || ''}"
-                                data-bs-toggle="tooltip"
-                                title="Edit">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-action btn-delete delete-question" 
-                                data-id="${row.id}" 
-                                data-bs-toggle="tooltip"
-                                title="Delete">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    `;
-                }
+                searchable: false
             }
         ],
         order: [[0, 'desc']],
@@ -269,19 +255,46 @@ $(document).ready(function() {
 
     // Edit Question
     $(document).on('click', '.edit-question', function() {
-        let id = $(this).data('id');
-        let questionText = $(this).data('question-text');
-        let options = $(this).data('options');
-        let correctAnswer = $(this).data('correct-answer');
+        const $button = $(this);
+        const id = $button.data('id');
+        const questionText = $button.data('question-text');
+        let options = $button.data('options');
+        const correctAnswer = $button.data('correct-answer');
+        
+        // Ensure options is an object
+        if (typeof options === 'string') {
+            try {
+                options = JSON.parse(options);
+            } catch (e) {
+                console.error('Error parsing options:', e, 'Raw options:', options);
+                options = { A: '', B: '', C: '', D: '' };
+            }
+        }
         
         // Populate the edit form
         $('#edit_question_id').val(id);
         $('#edit_question_text').val(questionText);
-        $('#edit_option_a').val(options.A || '');
-        $('#edit_option_b').val(options.B || '');
-        $('#edit_option_c').val(options.C || '');
-        $('#edit_option_d').val(options.D || '');
-        $('#edit_correct_answer').val(correctAnswer);
+        
+        // Set option values, defaulting to empty string if not found
+        // Make sure to handle both string keys (from JSON) and numeric indices
+        const optionValues = {
+            A: options.A || options[0] || '',
+            B: options.B || options[1] || '',
+            C: options.C || options[2] || '',
+            D: options.D || options[3] || ''
+        };
+        
+        $('#edit_option_a').val(optionValues.A);
+        $('#edit_option_b').val(optionValues.B);
+        $('#edit_option_c').val(optionValues.C);
+        $('#edit_option_d').val(optionValues.D);
+        
+        // Set correct answer if it exists in options
+        if (correctAnswer && (optionValues[correctAnswer] !== undefined)) {
+            $('#edit_correct_answer').val(correctAnswer);
+        } else {
+            $('#edit_correct_answer').val('');
+        }
         
         // Clear any previous validation errors
         $('.is-invalid').removeClass('is-invalid');
