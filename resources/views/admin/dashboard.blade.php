@@ -1,9 +1,19 @@
-@extends('layouts.master')
-@include('layouts.sidebar')
+@extends('layouts.admin')
 
 @section('title', 'Dashboard')
 
 @section('content')
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">@yield('title', 'Dashboard')</h4>
+            <div class="user-info">
+                <i class="fas fa-user-circle me-2"></i>
+                {{ auth()->user()->name ?? 'Guest' }}
+            </div>
+        </div>
+    </div>
+</div>
 <div class="row">
     <div class="col-md-3">
         <div class="card">
@@ -101,16 +111,6 @@
                             @endforeach
                         </tbody>
                     </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-                        </a>
-                        <a href="{{ route('results.index') }}" class="list-group-item list-group-item-action">
-                            View Results
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>
