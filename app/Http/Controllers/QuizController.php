@@ -54,7 +54,6 @@ class QuizController extends Controller
             'title' => $request->title,
             'time_limit' => $request->time_limit,
             'category_id' => $request->category_id,
-            'is_active' => $request->has('is_active'),
         ]);
 
         return response()->json([
@@ -80,7 +79,6 @@ class QuizController extends Controller
             'title' => $request->title,
             'time_limit' => $request->time_limit,
             'category_id' => $request->category_id,
-            'is_active' => $request->has('is_active'),
         ]);
 
         return response()->json([

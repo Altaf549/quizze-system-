@@ -21,8 +21,7 @@
                         <th>ID</th>
                         <th>Title</th>
                         <th>Category</th>
-                        <th>Time Limit</th>
-                        <th>Status</th>
+                        <th>Time Limit (minutes)</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -61,12 +60,6 @@
                         <input type="number" class="form-control" id="time_limit" name="time_limit" min="1" required>
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="is_active" name="is_active" checked>
-                            <label class="form-check-label" for="is_active">Active</label>
-                        </div>
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -87,7 +80,8 @@
             </div>
             <form id="editQuizForm">
                 @method('PUT')
-                <input type="hidden" id="edit_quiz_id">
+                @csrf
+                <input type="hidden" id="edit_quiz_id" name="id">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="edit_title" class="form-label">Quiz Title</label>
@@ -109,12 +103,6 @@
                         <input type="number" class="form-control" id="edit_time_limit" name="time_limit" min="1" required>
                         <div class="invalid-feedback"></div>
                     </div>
-                    <div class="mb-3">
-                        <div class="form-check">
-                            <input type="checkbox" class="form-check-input" id="edit_is_active" name="is_active">
-                            <label class="form-check-label" for="edit_is_active">Active</label>
-                        </div>
-                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -126,7 +114,13 @@
 </div>
 
 @push('scripts')
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <script>
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
 $(document).ready(function() {
     var table = $('#quizzesTable').DataTable({
         processing: true,
@@ -137,12 +131,6 @@ $(document).ready(function() {
             {data: 'title', name: 'title'},
             {data: 'category.name', name: 'category.name'},
             {data: 'time_limit', name: 'time_limit'},
-            {
-                data: 'status',
-                name: 'status',
-                orderable: false,
-                searchable: false
-            },
             {
                 data: 'actions',
                 name: 'actions',
@@ -174,7 +162,7 @@ $(document).ready(function() {
         $.ajax({
             url: "{{ route('quizzes.store') }}",
             method: 'POST',
-            data: $(this).serialize(),
+            data: $(this).serialize() + '&_token=' + $('meta[name="csrf-token"]').attr('content'),
             success: function(response) {
                 $('#addQuizModal').modal('hide');
                 table.ajax.reload();
@@ -198,13 +186,10 @@ $(document).ready(function() {
         let title = $(this).data('title');
         let category = $(this).data('category');
         let time = $(this).data('time');
-        let active = $(this).data('active');
-
         $('#edit_quiz_id').val(id);
         $('#edit_title').val(title);
         $('#edit_category_id').val(category);
         $('#edit_time_limit').val(time);
-        $('#edit_is_active').prop('checked', active === '1');
         $('#editQuizModal').modal('show');
     });
 
@@ -215,7 +200,7 @@ $(document).ready(function() {
         $.ajax({
             url: `/admin/quizzes/${id}`,
             method: 'PUT',
-            data: $(this).serialize(),
+            data: $(this).serialize() + '&_token=' + $('meta[name="csrf-token"]').attr('content'),
             success: function(response) {
                 $('#editQuizModal').modal('hide');
                 table.ajax.reload();
@@ -239,7 +224,11 @@ $(document).ready(function() {
             let id = $(this).data('id');
             $.ajax({
                 url: `/admin/quizzes/${id}`,
-                method: 'DELETE',
+                method: 'POST',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    _method: 'DELETE'
+                },
                 success: function(response) {
                     table.ajax.reload();
                     alert(response.message);
