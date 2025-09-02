@@ -308,25 +308,24 @@ $(document).ready(function() {
     $('#editQuestionForm').on('submit', function(e) {
         e.preventDefault();
         
-        let formData = {
-            _token: $('meta[name="csrf-token"]').attr('content'),
-            _method: 'PUT',
-            question_text: $('#edit_question_text').val(),
-            options: [
-                $('#edit_option_a').val(),
-                $('#edit_option_b').val(),
-                $('#edit_option_c').val(),
-                $('#edit_option_d').val()
-            ],
-            correct_answer: $('#edit_correct_answer').val()
-        };
+        let formData = new FormData();
+        formData.append('_token', '{{ csrf_token() }}');
+        formData.append('_method', 'PUT');
+        formData.append('question_text', $('#edit_question_text').val());
+        formData.append('options[]', $('#edit_option_a').val());
+        formData.append('options[]', $('#edit_option_b').val());
+        formData.append('options[]', $('#edit_option_c').val());
+        formData.append('options[]', $('#edit_option_d').val());
+        formData.append('correct_answer', $('#edit_correct_answer').val());
         
         let id = $('#edit_question_id').val();
         
         $.ajax({
             url: `/admin/questions/${id}`,
-            method: 'POST', // Laravel's way of handling PUT requests with _method
+            method: 'POST',
             data: formData,
+            processData: false,
+            contentType: false,
             success: function(response) {
                 $('#editQuestionModal').modal('hide');
                 table.ajax.reload();
@@ -352,54 +351,53 @@ $(document).ready(function() {
         });
     });
 
+    // Helper function to show toast notifications
     // Delete Question
     $(document).on('click', '.delete-question', function(e) {
         e.preventDefault();
         
-        if(confirm('Are you sure you want to delete this question?')) {
-            let id = $(this).data('id');
-            let button = $(this);
-            
+        const questionId = $(this).data('id');
+        const $row = $(this).closest('tr');
+        
+        // Show confirmation dialog
+        if (confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
             $.ajax({
-                url: `/admin/questions/${id}`,
-                method: 'POST',
+                url: `/admin/questions/${questionId}`,
+                type: 'POST',
                 data: {
-                    _token: $('meta[name="csrf-token"]').attr('content'),
+                    _token: '{{ csrf_token() }}',
                     _method: 'DELETE'
                 },
                 success: function(response) {
                     table.ajax.reload();
-                    showToast('success', response.message);
-                },
-                error: function(xhr) {
-                    showToast('error', 'An error occurred while deleting the question.');
+                    alert(response.message);
                 }
             });
         }
     });
-    });
-    
-    // Helper function to show toast notifications
-    function showToast(type, message) {
-        const toast = `
-            <div class="toast align-items-center text-white bg-${type} border-0 position-fixed bottom-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+
+});
+
+function showToast(type, message) {
+    const toast = `
+        <div class="toast align-items-center text-white bg-${type} border-0 position-fixed bottom-0 end-0 m-3" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
                 </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
-        `;
-        
-        // Add toast to body and show it
-        $(toast).appendTo('body').toast({ autohide: true, delay: 3000 }).toast('show');
-        
-        // Remove toast after it's hidden
-        setTimeout(() => {
-            $('.toast').toast('dispose').remove();
-        }, 3500);
-    }
+        </div>
+    `;
+    
+    // Add toast to body and show it
+    $(toast).appendTo('body').toast({ autohide: true, delay: 3000 }).toast('show');
+    
+    // Remove toast after it's hidden
+    setTimeout(() => {
+        $('.toast').toast('dispose').remove();
+    }, 3500);
+}
 </script>
 @endpush
 @endsection
