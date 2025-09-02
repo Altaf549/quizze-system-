@@ -105,11 +105,18 @@ $(document).ready(function() {
                 searchable: false,
                 render: function(data, type, row) {
                     return `
-                        <button class="btn btn-sm btn-primary edit-category" data-id="${row.id}" data-name="${row.name}">
-                            Edit
+                        <button class="btn btn-action btn-edit edit-category" 
+                                data-id="${row.id}" 
+                                data-name="${row.name}" 
+                                data-bs-toggle="tooltip" 
+                                title="Edit">
+                            <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger delete-category" data-id="${row.id}">
-                            Delete
+                        <button class="btn btn-action btn-delete delete-category" 
+                                data-id="${row.id}" 
+                                data-bs-toggle="tooltip" 
+                                title="Delete">
+                            <i class="fas fa-trash"></i>
                         </button>
                     `;
                 }

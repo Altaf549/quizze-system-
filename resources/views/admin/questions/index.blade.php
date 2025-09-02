@@ -168,7 +168,31 @@ $(document).ready(function() {
             {data: 'quiz.title', name: 'quiz.title'},
             {data: 'question_text', name: 'question_text'},
             {data: 'options', name: 'options'},
-            {data: 'actions', name: 'actions', orderable: false, searchable: false}
+            {
+                data: 'actions',
+                name: 'actions',
+                orderable: false,
+                searchable: false,
+                render: function(data, type, row) {
+                    return `
+                        <button class="btn btn-action btn-edit edit-question" 
+                                data-id="${row.id}" 
+                                data-question-text="${row.question_text}"
+                                data-options='${JSON.stringify(row.options)}'
+                                data-correct-answer="${row.correct_answer}"
+                                data-bs-toggle="tooltip"
+                                title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-action btn-delete delete-question" 
+                                data-id="${row.id}" 
+                                data-bs-toggle="tooltip"
+                                title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                }
+            }
         ]
     });
 

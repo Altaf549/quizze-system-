@@ -21,9 +21,6 @@ class QuizController extends Controller
             $quizzes = Quiz::with('category');
             return datatables()
                 ->eloquent($quizzes)
-                ->addColumn('status', function($quiz) {
-                    return $quiz->is_active ? 'Active' : 'Inactive';
-                })
                 ->addColumn('actions', function($quiz) {
                     return '
                         <button class="btn btn-sm btn-primary edit-quiz" data-id="'.$quiz->id.'">Edit</button>

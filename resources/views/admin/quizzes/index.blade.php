@@ -138,17 +138,27 @@ $(document).ready(function() {
                 searchable: false,
                 render: function(data, type, row) {
                     return `
-                        <a href="/admin/quizzes/${row.id}" class="btn btn-sm btn-info">View</a>
-                        <button class="btn btn-sm btn-primary edit-quiz" 
-                            data-id="${row.id}" 
-                            data-title="${row.title}"
-                            data-category="${row.category_id}"
-                            data-time="${row.time_limit}"
-                            data-active="${row.is_active}">
-                            Edit
+                        <a href="/admin/quizzes/${row.id}" 
+                           class="btn btn-action btn-view" 
+                           data-bs-toggle="tooltip" 
+                           title="View">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <button class="btn btn-action btn-edit edit-quiz" 
+                                data-id="${row.id}" 
+                                data-title="${row.title}"
+                                data-category="${row.category_id}"
+                                data-time="${row.time_limit}"
+                                data-active="${row.is_active}"
+                                data-bs-toggle="tooltip"
+                                title="Edit">
+                            <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger delete-quiz" data-id="${row.id}">
-                            Delete
+                        <button class="btn btn-action btn-delete delete-quiz" 
+                                data-id="${row.id}" 
+                                data-bs-toggle="tooltip"
+                                title="Delete">
+                            <i class="fas fa-trash"></i>
                         </button>
                     `;
                 }
