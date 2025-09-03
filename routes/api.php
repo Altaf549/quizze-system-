@@ -29,10 +29,12 @@ Route::prefix('v1')->group(function () {
     // Categories
     Route::get('categories', 'App\Http\Controllers\API\CategoryController@index');
     Route::get('categories/{id}', 'App\Http\Controllers\API\CategoryController@show');
+    Route::get('categories/{category}/quizzes', 'App\Http\Controllers\API\CategoryController@quizzes');
 
     // Quizzes
     Route::get('quizzes', 'App\Http\Controllers\API\QuizController@index');
     Route::get('quizzes/{id}', 'App\Http\Controllers\API\QuizController@show');
+    Route::get('quizzes/{quiz}/questions', 'App\Http\Controllers\API\QuizController@questions');
 
     // Questions
     Route::get('questions', 'App\Http\Controllers\API\QuestionController@index');

@@ -34,4 +34,21 @@ class CategoryController extends ApiController
 
         return $this->sendResponse($category, 'Category retrieved successfully.');
     }
+
+    /**
+     * Display all quizzes for a specific category.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function quizzes($id)
+    {
+        $category = Category::with('quizzes')->find($id);
+        
+        if (is_null($category)) {
+            return $this->sendError('Category not found.');
+        }
+
+        return $this->sendResponse($category->quizzes, 'Quizzes retrieved successfully.');
+    }
 }
