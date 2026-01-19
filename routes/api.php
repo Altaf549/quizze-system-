@@ -39,4 +39,10 @@ Route::prefix('v1')->group(function () {
     // Questions
     Route::get('questions', 'App\Http\Controllers\API\QuestionController@index');
     Route::get('questions/{id}', 'App\Http\Controllers\API\QuestionController@show');
+
+    // Results
+    Route::post('results/submit', 'App\Http\Controllers\API\ResultController@submit');
+    Route::get('results/device/{device_id}/completed', 'App\Http\Controllers\API\ResultController@getCompletedQuizzes');
+    Route::get('results/device/{device_id}/statistics', 'App\Http\Controllers\API\ResultController@getStatistics');
+    Route::get('results/{id}', 'App\Http\Controllers\API\ResultController@show');
 });

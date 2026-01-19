@@ -10,7 +10,7 @@ class Result extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id',
+        'device_id',
         'quiz_id',
         'score',
         'total_questions',
@@ -20,11 +20,6 @@ class Result extends Model
     protected $casts = [
         'completed_at' => 'datetime'
     ];
-
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
 
     public function quiz()
     {
