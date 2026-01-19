@@ -7,18 +7,29 @@ use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\ResultController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ContentController;
+use App\Http\Controllers\PageController;
 
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Guest Routes
-Route::middleware('guest')->group(function() {
-    Route::get('/login', [AdminController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AdminController::class, 'login']);
-});
+// Login Routes (with auth check)
+Route::get('/login', function () {
+    if (auth()->check()) {
+        return redirect()->route('admin.dashboard');
+    }
+    return app(App\Http\Controllers\AdminController::class)->showLoginForm();
+})->name('login');
+
+Route::post('/login', [AdminController::class, 'login'])->middleware('guest');
 
 Route::post('/logout', [AdminController::class, 'logout'])->name('logout')->middleware('auth');
+
+// Public Content Routes
+Route::get('/about-us', [PageController::class, 'aboutUs'])->name('pages.about');
+Route::get('/privacy-policy', [PageController::class, 'privacyPolicy'])->name('pages.privacy');
+Route::get('/terms-conditions', [PageController::class, 'termsConditions'])->name('pages.terms');
 
 // Admin Routes
 Route::prefix('admin')->middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->group(function () {
@@ -30,4 +41,5 @@ Route::prefix('admin')->middleware(['auth', \App\Http\Middleware\AdminMiddleware
     Route::resource('questions', QuestionController::class);
     Route::post('questions/{question}/toggle-status', [QuestionController::class, 'toggleStatus'])->name('questions.toggle-status');
     Route::get('results', [ResultController::class, 'index'])->name('results.index');
+    Route::resource('contents', ContentController::class);
 });

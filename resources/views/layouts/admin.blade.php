@@ -77,6 +77,9 @@
                             <a href="{{ route('questions.index') }}" class="nav-link text-white">Questions</a>
                         </li>
                         <li>
+                            <a href="{{ route('contents.index') }}" class="nav-link text-white">Content</a>
+                        </li>
+                        <li>
                             <a href="{{ route('results.index') }}" class="nav-link text-white">Results</a>
                         </li>
                     </ul>
