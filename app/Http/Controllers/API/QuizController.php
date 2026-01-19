@@ -39,4 +39,25 @@ class QuizController extends ApiController
 
         return $this->sendResponse($quiz, 'Quiz retrieved successfully.');
     }
+
+    /**
+     * Display all questions for a specific quiz.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function questions($id)
+    {
+        $quiz = Quiz::with(['questions' => function($query) {
+                $query->where('is_active', true);
+            }])
+            ->where('is_active', true)
+            ->find($id);
+        
+        if (is_null($quiz)) {
+            return $this->sendError('Quiz not found.');
+        }
+
+        return $this->sendResponse($quiz->questions, 'Questions retrieved successfully.');
+    }
 }
