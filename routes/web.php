@@ -24,7 +24,10 @@ Route::post('/logout', [AdminController::class, 'logout'])->name('logout')->midd
 Route::prefix('admin')->middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::resource('categories', CategoryController::class);
+    Route::post('categories/{category}/toggle-status', [CategoryController::class, 'toggleStatus'])->name('categories.toggle-status');
     Route::resource('quizzes', QuizController::class);
+    Route::post('quizzes/{quiz}/toggle-status', [QuizController::class, 'toggleStatus'])->name('quizzes.toggle-status');
     Route::resource('questions', QuestionController::class);
+    Route::post('questions/{question}/toggle-status', [QuestionController::class, 'toggleStatus'])->name('questions.toggle-status');
     Route::get('results', [ResultController::class, 'index'])->name('results.index');
 });

@@ -273,6 +273,10 @@ Retrieves a specific question with its quiz information.
 {
     "id": "integer",
     "name": "string",
+    "is_active": "boolean",
+    "description": "text (nullable)",
+    "icon": "string (nullable)",
+    "order": "integer",
     "created_at": "datetime",
     "updated_at": "datetime"
 }
@@ -283,9 +287,15 @@ Retrieves a specific question with its quiz information.
 {
     "id": "integer",
     "title": "string",
+    "description": "text (nullable)",
     "time_limit": "integer (minutes)",
+    "difficulty": "string (easy|medium|hard)",
+    "total_points": "integer",
+    "image": "string (nullable)",
     "category_id": "integer",
     "is_active": "boolean",
+    "attempts_count": "integer",
+    "rating": "decimal (3,2)",
     "created_at": "datetime",
     "updated_at": "datetime",
     "category": "Category object (when included)",
@@ -562,3 +572,6 @@ fetch('http://localhost:8000/api/v1/results/device/android_device_123/statistics
 - Quiz time limits are specified in minutes
 - **Results are tracked using device_id only - no user authentication required**
 - **device_id must be a unique identifier for each device (e.g., Android device ID, UUID)**
+- **Only active categories and quizzes are returned by default**
+- **Categories are ordered by 'order' field, then by name**
+- **Quizzes are ordered by creation date (newest first)**

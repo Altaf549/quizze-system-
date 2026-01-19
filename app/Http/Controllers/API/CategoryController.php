@@ -14,7 +14,10 @@ class CategoryController extends ApiController
      */
     public function index()
     {
-        $categories = Category::all();
+        $categories = Category::where('is_active', true)
+            ->orderBy('order', 'asc')
+            ->orderBy('name', 'asc')
+            ->get();
         return $this->sendResponse($categories, 'Categories retrieved successfully.');
     }
 
@@ -43,7 +46,10 @@ class CategoryController extends ApiController
      */
     public function quizzes($id)
     {
-        $category = Category::with('quizzes')->find($id);
+        $category = Category::with(['quizzes' => function($query) {
+            $query->where('is_active', true)
+                  ->orderBy('created_at', 'desc');
+        }])->find($id);
         
         if (is_null($category)) {
             return $this->sendError('Category not found.');

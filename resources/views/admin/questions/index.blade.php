@@ -1,5 +1,76 @@
 @extends('layouts.admin')
 
+@section('title', 'Questions Management')
+
+@push('styles')
+<style>
+.form-switch {
+    position: relative;
+    display: inline-block;
+    width: 80px;
+    height: 36px;
+}
+
+.form-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.form-switch label {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #e0e0e0;
+    transition: .5s;
+    border-radius: 36px;
+    border: 2px solid #ccc;
+}
+
+.form-switch label:before {
+    position: absolute;
+    content: "";
+    height: 28px;
+    width: 28px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .5s;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.form-switch label:after {
+    position: absolute;
+    content: "";
+    height: 28px;
+    width: 28px;
+    right: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .5s;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.form-switch input:checked + label {
+    background-color: #4CAF50;
+    border-color: #4CAF50;
+}
+
+.form-switch input:checked + label:before {
+    transform: translateX(32px);
+}
+
+.form-switch input:checked + label:after {
+    background-color: #4CAF50;
+}
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid">
     <div class="row mb-4">
@@ -22,6 +93,7 @@
                         <th>Quiz</th>
                         <th>Question</th>
                         <th>Options</th>
+                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -180,6 +252,12 @@ $(document).ready(function() {
                 data: 'options_display', 
                 name: 'options_display', 
                 orderable: false, 
+                searchable: false
+            },
+            {
+                data: 'is_active', 
+                name: 'is_active',
+                orderable: false,
                 searchable: false
             },
             {
@@ -374,6 +452,41 @@ $(document).ready(function() {
                 }
             });
         }
+    });
+
+    // Handle Toggle Switch Changes
+    $(document).on('change', '.toggle-question-status', function() {
+        let id = $(this).data('id');
+        let isChecked = $(this).is(':checked');
+        
+        $.ajax({
+            url: `/admin/questions/${id}/toggle-status`,
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}'
+            },
+            success: function(response) {
+                // Update switch state based on response
+                if (response.is_active !== isChecked) {
+                    $(this).prop('checked', response.is_active);
+                }
+                table.ajax.reload();
+                alert(response.message);
+            },
+            error: function(xhr) {
+                // Handle validation errors
+                if (xhr.status === 422) {
+                    let errors = xhr.responseJSON;
+                    alert(errors.message || 'An error occurred');
+                    // Revert switch state
+                    $(this).prop('checked', isChecked);
+                } else {
+                    alert('An error occurred. Please try again.');
+                    // Revert switch state
+                    $(this).prop('checked', isChecked);
+                }
+            }
+        });
     });
 
 });

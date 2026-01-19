@@ -39,8 +39,13 @@ class QuizController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
             'time_limit' => 'required|integer|min:1',
+            'difficulty' => 'string|in:easy,medium,hard',
+            'total_points' => 'integer|min:0',
+            'image' => 'nullable|string|max:255',
             'category_id' => 'required|exists:categories,id',
+            'is_active' => 'boolean',
         ]);
 
         if ($validator->fails()) {
@@ -49,8 +54,13 @@ class QuizController extends Controller
 
         $quiz = Quiz::create([
             'title' => $request->title,
+            'description' => $request->description,
             'time_limit' => $request->time_limit,
+            'difficulty' => $request->difficulty ?? 'medium',
+            'total_points' => $request->total_points ?? 0,
+            'image' => $request->image,
             'category_id' => $request->category_id,
+            'is_active' => $request->is_active ?? true,
         ]);
 
         return response()->json([
@@ -64,8 +74,13 @@ class QuizController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
             'time_limit' => 'required|integer|min:1',
+            'difficulty' => 'string|in:easy,medium,hard',
+            'total_points' => 'integer|min:0',
+            'image' => 'nullable|string|max:255',
             'category_id' => 'required|exists:categories,id',
+            'is_active' => 'boolean',
         ]);
 
         if ($validator->fails()) {
@@ -74,8 +89,13 @@ class QuizController extends Controller
 
         $quiz->update([
             'title' => $request->title,
+            'description' => $request->description,
             'time_limit' => $request->time_limit,
+            'difficulty' => $request->difficulty ?? $quiz->difficulty,
+            'total_points' => $request->total_points ?? $quiz->total_points,
+            'image' => $request->image,
             'category_id' => $request->category_id,
+            'is_active' => $request->is_active ?? $quiz->is_active,
         ]);
 
         return response()->json([
@@ -98,5 +118,36 @@ class QuizController extends Controller
     {
         $quiz->load(['questions', 'category']);
         return view('admin.quizzes.show', compact('quiz'));
+    }
+
+    public function toggleStatus(Quiz $quiz)
+    {
+        // Check if quiz can be activated (parent category must be active)
+        if (!$quiz->is_active && !$quiz->canBeActivated()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot activate quiz because its category is inactive',
+                'is_active' => $quiz->is_active
+            ], 422);
+        }
+
+        $newStatus = !$quiz->is_active;
+        
+        // Update quiz status
+        $quiz->update([
+            'is_active' => $newStatus
+        ]);
+
+        // Cascade deactivation to all questions in this quiz
+        if (!$newStatus) {
+            $quiz->questions()->update(['is_active' => false]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Quiz status updated successfully',
+            'is_active' => $quiz->is_active,
+            'cascaded_questions' => !$newStatus ? $quiz->questions()->count() : 0
+        ]);
     }
 }

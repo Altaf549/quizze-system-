@@ -11,7 +11,7 @@ class QuestionController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $query = Question::with('quiz');
+            $query = Question::with('quiz.category')->select('questions.*');
             
             return datatables()
                 ->eloquent($query)
@@ -43,6 +43,7 @@ class QuestionController extends Controller
                                 data-question-text="'.htmlspecialchars($question->question_text, ENT_QUOTES).'"
                                 data-options="'.htmlspecialchars($options, ENT_QUOTES).'"
                                 data-correct-answer="'.htmlspecialchars($question->correct_answer, ENT_QUOTES).'"
+                                data-is_active="'.($question->is_active ? 'true' : 'false').'"
                                 data-bs-toggle="tooltip"
                                 title="Edit">
                             <i class="fas fa-edit"></i>
@@ -54,10 +55,19 @@ class QuestionController extends Controller
                             <i class="fas fa-trash"></i>
                         </button>';
                 })
+                ->addColumn('is_active', function($question) {
+                    $isChecked = $question->is_active ? 'checked' : '';
+                    return '
+                        <div class="form-check form-switch">
+                            <input class="form-check-input toggle-question-status" type="checkbox" role="switch" data-id="'.$question->id.'" '.$isChecked.'>
+                            <label class="form-check-label"></label>
+                        </div>
+                    ';
+                })
                 ->editColumn('quiz.title', function($question) {
                     return $question->quiz ? htmlspecialchars($question->quiz->title, ENT_QUOTES) : 'N/A';
                 })
-                ->rawColumns(['actions', 'options_display'])
+                ->rawColumns(['actions', 'options_display', 'is_active'])
                 ->toJson();
         }
 
@@ -71,7 +81,8 @@ class QuestionController extends Controller
             'question_text' => 'required|string',
             'options' => 'required|array|size:4',
             'options.*' => 'required|string|distinct',
-            'correct_answer' => 'required|in:A,B,C,D'
+            'correct_answer' => 'required|in:A,B,C,D',
+            'is_active' => 'boolean'
         ]);
 
         if ($validator->fails()) {
@@ -85,7 +96,8 @@ class QuestionController extends Controller
             'quiz_id' => $request->quiz_id,
             'question_text' => $request->question_text,
             'options' => $options,
-            'correct_answer' => $request->correct_answer
+            'correct_answer' => $request->correct_answer,
+            'is_active' => $request->is_active ?? true
         ]);
 
         return response()->json([
@@ -101,7 +113,8 @@ class QuestionController extends Controller
             'question_text' => 'required|string',
             'options' => 'required|array|size:4',
             'options.*' => 'required|string|distinct',
-            'correct_answer' => 'required|in:A,B,C,D'
+            'correct_answer' => 'required|in:A,B,C,D',
+            'is_active' => 'boolean'
         ]);
 
         if ($validator->fails()) {
@@ -114,7 +127,8 @@ class QuestionController extends Controller
         $question->update([
             'question_text' => $request->question_text,
             'options' => $options,
-            'correct_answer' => $request->correct_answer
+            'correct_answer' => $request->correct_answer,
+            'is_active' => $request->is_active ?? $question->is_active
         ]);
 
         return response()->json([
@@ -130,6 +144,28 @@ class QuestionController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Question deleted successfully'
+        ]);
+    }
+
+    public function toggleStatus(Question $question)
+    {
+        // Check if question can be activated (parent quiz and category must be active)
+        if (!$question->is_active && !$question->canBeActivated()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot activate question because its quiz or category is inactive',
+                'is_active' => $question->is_active
+            ], 422);
+        }
+
+        $question->update([
+            'is_active' => !$question->is_active
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Question status updated successfully',
+            'is_active' => $question->is_active
         ]);
     }
 }

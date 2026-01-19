@@ -14,7 +14,10 @@ class QuizController extends ApiController
      */
     public function index()
     {
-        $quizzes = Quiz::with('category')->get();
+        $quizzes = Quiz::with('category')
+            ->where('is_active', true)
+            ->orderBy('created_at', 'desc')
+            ->get();
         return $this->sendResponse($quizzes, 'Quizzes retrieved successfully.');
     }
 
@@ -26,7 +29,9 @@ class QuizController extends ApiController
      */
     public function show($id)
     {
-        $quiz = Quiz::with(['questions', 'category'])->find($id);
+        $quiz = Quiz::with(['questions', 'category'])
+            ->where('is_active', true)
+            ->find($id);
         
         if (is_null($quiz)) {
             return $this->sendError('Quiz not found.');
